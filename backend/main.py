@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 import PyPDF2
 import io
 import docx
+import re
 
 app = FastAPI()
 
@@ -37,8 +38,20 @@ async def upload_resume(file: UploadFile = File(...)):
     else:
         return{"error" : "Unsupported file format."}
     
+    # Finding out emails and phone no.s with regular expressions
+    EMAIL_REGEX = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
+    PHONE_REGEX = r"(?:\+?91[\s-]?)?[6-9]\d{9}"
+
+    emails = re.findall(EMAIL_REGEX, text)
+    phones = re.findall(PHONE_REGEX, text)
+
+    # deduping while keeping order
+    emails = list(dict.fromkeys([e.strip() for e in emails]))
+    phones = list(dict.fromkeys([p.strip() for p in phones]))
 
     return{
         "filename" : file.filename,
+        "emails" : emails,
+        "phones" : phones,
         "extracted_text" : text[:500]
     }
