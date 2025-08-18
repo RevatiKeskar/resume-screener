@@ -3,12 +3,17 @@ import PyPDF2
 import io
 import docx
 import re
+import chromadb
+from sentence_transformers import SentenceTransformer
 
 app = FastAPI()
+# load embedding model
+model = SentenceTransformer("all-MiniLm-L6-v2")
 
-@app.get("/")
-def root():
-    return ({"Hello":"World"})
+# create a chromadb client  + collection
+chroma_client = chromadb.PersistentClient(path = "resume_chroma_db")
+collection = chroma_client.get_or_create_collection(name = "resumes")
+
 
 @app.post("/upload_resume")
 async def upload_resume(file: UploadFile = File(...)):
@@ -49,9 +54,13 @@ async def upload_resume(file: UploadFile = File(...)):
     emails = list(dict.fromkeys([e.strip() for e in emails]))
     phones = list(dict.fromkeys([p.strip() for p in phones]))
 
+    text_cleaned = re.sub(EMAIL_REGEX, " ", text)
+    text_cleaned = re.sub(PHONE_REGEX, " ", text_cleaned)
+    
     return{
         "filename" : file.filename,
         "emails" : emails,
         "phones" : phones,
-        "extracted_text" : text[:500]
+        "cleaned_text" : text_cleaned[:1000]
     }
+
