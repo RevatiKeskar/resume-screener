@@ -3,6 +3,7 @@ import PyPDF2
 import io
 import docx
 import re
+from uuid import uuid4
 import chromadb
 from sentence_transformers import SentenceTransformer
 
@@ -46,6 +47,7 @@ async def upload_resume(file: UploadFile = File(...)):
     # Finding out emails and phone no.s with regular expressions
     EMAIL_REGEX = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
     PHONE_REGEX = r"(?:\+?91[\s-]?)?[6-9]\d{9}"
+    URL_REGEX   = r"(https?://\S+|www\.\S+)"
 
     emails = re.findall(EMAIL_REGEX, text)
     phones = re.findall(PHONE_REGEX, text)
@@ -54,13 +56,34 @@ async def upload_resume(file: UploadFile = File(...)):
     emails = list(dict.fromkeys([e.strip() for e in emails]))
     phones = list(dict.fromkeys([p.strip() for p in phones]))
 
-    text_cleaned = re.sub(EMAIL_REGEX, " ", text)
-    text_cleaned = re.sub(PHONE_REGEX, " ", text_cleaned)
+    def clean_text_for_llm():
+        text_cleaned = re.sub(EMAIL_REGEX, " ", text)
+        text_cleaned = re.sub(PHONE_REGEX, " ", text_cleaned)
+        text_cleaned = re.sub(URL_REGEX, " ", text_cleaned)
+        return text_cleaned
+    text_cleaned = clean_text_for_llm()
+
+    def store_resume_in_chroma(doc_text:str, metadata: dict):
+        emb = model.encode([doc_text]).tolist()
+        doc_id = f"resume_{{uuid4()}}"
+        collection.add(
+            documents = [doc_text],
+            embeddings = emb,
+            metadatas = [metadata],
+            ids = [doc_id]
+        )
+        return doc_id
+    
+    emails_meta = emails[0] if emails else None
+    phones_meta = phones[0] if phones else None
+    doc_id = store_resume_in_chroma(text_cleaned, 
+                                    {"filename":file.filename, "emails" : emails_meta, "phones" : phones_meta})
     
     return{
         "filename" : file.filename,
         "emails" : emails,
         "phones" : phones,
-        "cleaned_text" : text_cleaned[:1000]
+        "cleaned_text" : text_cleaned[:1000],
+        "doc_id" : doc_id
     }
 
