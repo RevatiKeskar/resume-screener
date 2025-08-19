@@ -65,7 +65,7 @@ async def upload_resume(file: UploadFile = File(...)):
 
     def store_resume_in_chroma(doc_text:str, metadata: dict):
         emb = model.encode([doc_text]).tolist()
-        doc_id = f"resume_{{uuid4()}}"
+        doc_id = f"resume_{uuid4()}"
         collection.add(
             documents = [doc_text],
             embeddings = emb,
