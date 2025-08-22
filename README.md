@@ -24,9 +24,58 @@ Upload a resume, upload a job description, and let AI do the heavy lifting — p
 
 ---
 
-## 🚀 Getting Started  
+## Getting started  
 
 ### 1️⃣ Clone the Repository  
 ```bash
 git clone https://github.com/your-username/resume-ultimate.git
 cd resume-ultimate
+```
+
+### Create & Activate Virtual Environment
+```bash
+python -m venv myenv
+source myenv/bin/activate   # Linux/Mac
+myenv\Scripts\activate      # Windows
+```
+
+### Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Run the FastAPI Server
+```bash
+uvicorn main:app --reload
+```
+
+API will be live at http://127.0.0.1:8000/docs
+
+
+## 📌 API Endpoints  
+
+### 📄 Upload Resume  
+**POST** `/upload_resume`  
+- **Input**: PDF or DOCX file  
+- **Action**: Parses, embeds, stores in ChromaDB  
+
+### 📝 Upload Job Description  
+**POST** `/upload_job`  
+- **Input**: Job description (text file or raw text)  
+- **Action**: Embeds JD, queries ChromaDB, returns top matching resumes  
+
+---
+
+## 🌟 Roadmap  
+- ✅ Resume parsing & storage  
+- ✅ Job description embedding & matching  
+- ⬜️ Web UI for easy uploads  
+- ⬜️ Advanced filters (skills, experience, location)  
+- ⬜️ Deployment on cloud (Azure/GCP/AWS)  
+
+---
+
+## 📜 License  
+This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.  
+
+
